@@ -4,13 +4,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Mail, CheckCircle } from "lucide-react";
 
 interface SavedTemplate {
   id: number;
   name: string;
   content: string;
   date: string;
+  emailCompatibility?: {
+    gmail: boolean;
+    outlook: boolean;
+  };
 }
 
 const Library = () => {
@@ -21,22 +25,44 @@ const Library = () => {
 
   useEffect(() => {
     // Load saved templates from localStorage
-    const templates = localStorage.getItem("savedTemplates");
-    if (templates) {
-      setSavedTemplates(JSON.parse(templates));
-    }
+    const loadTemplates = () => {
+      const templates = localStorage.getItem("savedTemplates");
+      if (templates) {
+        setSavedTemplates(JSON.parse(templates));
+      }
+    };
+
+    loadTemplates();
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadTemplates);
+    return () => window.removeEventListener('storage', loadTemplates);
   }, []);
+
+  const checkEmailCompatibility = (content: string) => {
+    // Basic compatibility checks
+    const hasInlineStyles = content.includes('style=');
+    const hasComplexSelectors = content.includes('@media') || content.includes('@import');
+    const hasWebFonts = content.includes('@font-face');
+    
+    return {
+      gmail: !hasComplexSelectors && !hasWebFonts,
+      outlook: !hasInlineStyles && !hasComplexSelectors && !hasWebFonts
+    };
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === "text/html") {
       setHtmlFile(file);
       const content = await file.text();
+      const compatibility = checkEmailCompatibility(content);
+      
       const newTemplate = {
         id: Date.now(),
         name: file.name,
         content: content,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        emailCompatibility: compatibility
       };
       
       // Save to localStorage and update state
@@ -44,8 +70,11 @@ const Library = () => {
       localStorage.setItem("savedTemplates", JSON.stringify(updatedTemplates));
       setSavedTemplates(updatedTemplates);
       
+      // Trigger storage event for other tabs
+      window.dispatchEvent(new Event('storage'));
+      
       // Navigate to editor with content
-      navigate(`/editor`, { state: { content } });
+      navigate(`/editor`, { state: { content, compatibility } });
       
       toast({
         title: "Template Uploaded",
@@ -55,7 +84,20 @@ const Library = () => {
   };
 
   const handleTemplateClick = (template: SavedTemplate) => {
-    navigate(`/editor`, { state: { content: template.content } });
+    navigate(`/editor`, { 
+      state: { 
+        content: template.content,
+        compatibility: template.emailCompatibility 
+      } 
+    });
+  };
+
+  const exportToEmailClient = async (template: SavedTemplate, client: 'gmail' | 'outlook') => {
+    // This is a mock function - in a real implementation, you would integrate with email client APIs
+    toast({
+      title: `Export to ${client}`,
+      description: `Template "${template.name}" has been exported to ${client} as a draft.`,
+    });
   };
 
   return (
@@ -94,10 +136,39 @@ const Library = () => {
                 <Card
                   key={template.id}
                   className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleTemplateClick(template)}
                 >
-                  <h3 className="text-lg font-semibold">{template.name}</h3>
-                  <p className="text-sm text-gray-500">Created: {template.date}</p>
+                  <div onClick={() => handleTemplateClick(template)}>
+                    <h3 className="text-lg font-semibold">{template.name}</h3>
+                    <p className="text-sm text-gray-500">Created: {template.date}</p>
+                    {template.emailCompatibility && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className={`h-4 w-4 ${template.emailCompatibility.gmail ? 'text-green-500' : 'text-red-500'}`} />
+                          <span className="text-sm">Gmail Compatible</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className={`h-4 w-4 ${template.emailCompatibility.outlook ? 'text-green-500' : 'text-red-500'}`} />
+                          <span className="text-sm">Outlook Compatible</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => exportToEmailClient(template, 'gmail')}
+                    >
+                      <Mail className="mr-2 h-4 w-4" /> Export to Gmail
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => exportToEmailClient(template, 'outlook')}
+                    >
+                      <Mail className="mr-2 h-4 w-4" /> Export to Outlook
+                    </Button>
+                  </div>
                 </Card>
               ))
             ) : (

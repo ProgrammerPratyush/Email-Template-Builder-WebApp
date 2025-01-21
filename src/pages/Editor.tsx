@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { templates } from "./Templates";
+import { Mail, AlertTriangle } from "lucide-react";
 
 const TOOLBAR_OPTIONS = [
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -17,28 +18,57 @@ const TOOLBAR_OPTIONS = [
   ["clean"],
 ];
 
+interface EmailCompatibility {
+  gmail: boolean;
+  outlook: boolean;
+}
+
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const [content, setContent] = useState("");
+  const [compatibility, setCompatibility] = useState<EmailCompatibility>({
+    gmail: true,
+    outlook: true
+  });
 
   useEffect(() => {
     if (location.state?.content) {
       setContent(location.state.content);
+      if (location.state.compatibility) {
+        setCompatibility(location.state.compatibility);
+      }
     } else if (id) {
       const template = templates.find((t) => t.id === parseInt(id));
       if (template) {
-        setContent(`
+        const templateContent = `
           <h1>${template.name}</h1>
           <p>${template.description}</p>
           <img src="${template.image}" alt="${template.name}" style="max-width: 100%; height: auto; margin: 20px 0;" />
           <p>Category: ${template.category}</p>
-        `);
+        `;
+        setContent(templateContent);
       }
     }
   }, [id, location.state]);
+
+  const checkEmailCompatibility = (content: string) => {
+    const hasInlineStyles = content.includes('style=');
+    const hasComplexSelectors = content.includes('@media') || content.includes('@import');
+    const hasWebFonts = content.includes('@font-face');
+    
+    return {
+      gmail: !hasComplexSelectors && !hasWebFonts,
+      outlook: !hasInlineStyles && !hasComplexSelectors && !hasWebFonts
+    };
+  };
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    setCompatibility(checkEmailCompatibility(newContent));
+  };
 
   const handleSave = () => {
     const savedTemplates = JSON.parse(localStorage.getItem("savedTemplates") || "[]");
@@ -46,10 +76,14 @@ const Editor = () => {
       id: Date.now(),
       name: `Template ${savedTemplates.length + 1}`,
       content: content,
-      date: new Date().toLocaleDateString()
+      date: new Date().toLocaleDateString(),
+      emailCompatibility: compatibility
     };
     
     localStorage.setItem("savedTemplates", JSON.stringify([...savedTemplates, newTemplate]));
+    
+    // Trigger storage event for other tabs
+    window.dispatchEvent(new Event('storage'));
     
     toast({
       title: "Template Saved",
@@ -85,10 +119,31 @@ const Editor = () => {
               </Button>
             </div>
           </div>
+
+          <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2">Email Client Compatibility</h3>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Mail className={`h-5 w-5 ${compatibility.gmail ? 'text-green-500' : 'text-red-500'}`} />
+                <span>Gmail: {compatibility.gmail ? 'Compatible' : 'Issues detected'}</span>
+                {!compatibility.gmail && (
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className={`h-5 w-5 ${compatibility.outlook ? 'text-green-500' : 'text-red-500'}`} />
+                <span>Outlook: {compatibility.outlook ? 'Compatible' : 'Issues detected'}</span>
+                {!compatibility.outlook && (
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                )}
+              </div>
+            </div>
+          </div>
+
           <ReactQuill
             theme="snow"
             value={content}
-            onChange={setContent}
+            onChange={handleContentChange}
             modules={{
               toolbar: TOOLBAR_OPTIONS,
             }}
