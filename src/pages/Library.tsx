@@ -4,7 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Mail, CheckCircle } from "lucide-react";
+import { Plus, Mail, CheckCircle, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface SavedTemplate {
   id: number;
@@ -17,14 +25,23 @@ interface SavedTemplate {
   };
 }
 
+interface EmailAccount {
+  type: 'gmail' | 'outlook';
+  email: string;
+  verified: boolean;
+}
+
 const Library = () => {
   const [htmlFile, setHtmlFile] = useState<File | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [currentEmailAccount, setCurrentEmailAccount] = useState<EmailAccount | null>(null);
+  const [emailInput, setEmailInput] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<SavedTemplate | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load saved templates from localStorage
     const loadTemplates = () => {
       const templates = localStorage.getItem("savedTemplates");
       if (templates) {
@@ -33,22 +50,9 @@ const Library = () => {
     };
 
     loadTemplates();
-    // Add event listener for storage changes
     window.addEventListener('storage', loadTemplates);
     return () => window.removeEventListener('storage', loadTemplates);
   }, []);
-
-  const checkEmailCompatibility = (content: string) => {
-    // Basic compatibility checks
-    const hasInlineStyles = content.includes('style=');
-    const hasComplexSelectors = content.includes('@media') || content.includes('@import');
-    const hasWebFonts = content.includes('@font-face');
-    
-    return {
-      gmail: !hasComplexSelectors && !hasWebFonts,
-      outlook: !hasInlineStyles && !hasComplexSelectors && !hasWebFonts
-    };
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -65,15 +69,12 @@ const Library = () => {
         emailCompatibility: compatibility
       };
       
-      // Save to localStorage and update state
       const updatedTemplates = [...savedTemplates, newTemplate];
       localStorage.setItem("savedTemplates", JSON.stringify(updatedTemplates));
       setSavedTemplates(updatedTemplates);
       
-      // Trigger storage event for other tabs
       window.dispatchEvent(new Event('storage'));
       
-      // Navigate to editor with content
       navigate(`/editor`, { state: { content, compatibility } });
       
       toast({
@@ -92,12 +93,61 @@ const Library = () => {
     });
   };
 
-  const exportToEmailClient = async (template: SavedTemplate, client: 'gmail' | 'outlook') => {
-    // This is a mock function - in a real implementation, you would integrate with email client APIs
+  const handleDeleteTemplate = (templateId: number) => {
+    const updatedTemplates = savedTemplates.filter(template => template.id !== templateId);
+    localStorage.setItem("savedTemplates", JSON.stringify(updatedTemplates));
+    setSavedTemplates(updatedTemplates);
+    window.dispatchEvent(new Event('storage'));
+    
     toast({
-      title: `Export to ${client}`,
-      description: `Template "${template.name}" has been exported to ${client} as a draft.`,
+      title: "Template Deleted",
+      description: "The template has been deleted successfully.",
     });
+  };
+
+  const initiateEmailExport = (template: SavedTemplate, type: 'gmail' | 'outlook') => {
+    setSelectedTemplate(template);
+    setCurrentEmailAccount({ type, email: '', verified: false });
+    setIsEmailDialogOpen(true);
+  };
+
+  const verifyEmailAccount = async () => {
+    // This is a mock verification - in a real implementation, you would:
+    // 1. Integrate with Gmail/Outlook OAuth
+    // 2. Verify the user's credentials
+    // 3. Get authorization to create drafts
+    
+    if (emailInput && currentEmailAccount) {
+      setCurrentEmailAccount({ ...currentEmailAccount, email: emailInput, verified: true });
+      
+      toast({
+        title: "Email Verified",
+        description: `Your ${currentEmailAccount.type} account has been verified.`,
+      });
+
+      // Mock saving template as draft
+      if (selectedTemplate) {
+        toast({
+          title: "Template Exported",
+          description: `Template saved as draft in your ${currentEmailAccount.type} account.`,
+        });
+      }
+      
+      setIsEmailDialogOpen(false);
+      setEmailInput("");
+      setSelectedTemplate(null);
+    }
+  };
+
+  const checkEmailCompatibility = (content: string) => {
+    const hasInlineStyles = content.includes('style=');
+    const hasComplexSelectors = content.includes('@media') || content.includes('@import');
+    const hasWebFonts = content.includes('@font-face');
+    
+    return {
+      gmail: !hasComplexSelectors && !hasWebFonts,
+      outlook: !hasInlineStyles && !hasComplexSelectors && !hasWebFonts
+    };
   };
 
   return (
@@ -135,9 +185,9 @@ const Library = () => {
               savedTemplates.map((template) => (
                 <Card
                   key={template.id}
-                  className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                  className="p-6 hover:shadow-lg transition-shadow"
                 >
-                  <div onClick={() => handleTemplateClick(template)}>
+                  <div onClick={() => handleTemplateClick(template)} className="cursor-pointer">
                     <h3 className="text-lg font-semibold">{template.name}</h3>
                     <p className="text-sm text-gray-500">Created: {template.date}</p>
                     {template.emailCompatibility && (
@@ -157,28 +207,63 @@ const Library = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => exportToEmailClient(template, 'gmail')}
+                      onClick={() => initiateEmailExport(template, 'gmail')}
                     >
                       <Mail className="mr-2 h-4 w-4" /> Export to Gmail
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => exportToEmailClient(template, 'outlook')}
+                      onClick={() => initiateEmailExport(template, 'outlook')}
                     >
                       <Mail className="mr-2 h-4 w-4" /> Export to Outlook
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </Card>
               ))
             ) : (
-              <Card className="p-6 text-center">
+              <Card className="p-6 text-center col-span-full">
                 <p className="text-gray-500">No saved templates yet</p>
               </Card>
             )}
           </div>
         </div>
       </div>
+
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify Email Account</DialogTitle>
+            <DialogDescription>
+              Please enter your {currentEmailAccount?.type} email address to verify your account
+              and save the template as a draft.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              type="email"
+              placeholder="Enter your email address"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={verifyEmailAccount}>
+              Verify & Export
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
