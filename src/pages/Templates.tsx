@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-const templates = [
+export const templates = [
   {
     id: 1,
     name: "Business Invitation",
