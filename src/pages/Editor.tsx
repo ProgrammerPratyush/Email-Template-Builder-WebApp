@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { templates } from "./Templates";
 
 const TOOLBAR_OPTIONS = [
@@ -20,20 +20,37 @@ const TOOLBAR_OPTIONS = [
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [content, setContent] = useState("");
 
   useEffect(() => {
-    if (id) {
+    if (location.state?.content) {
+      setContent(location.state.content);
+    } else if (id) {
       const template = templates.find((t) => t.id === parseInt(id));
       if (template) {
-        setContent(`<h1>${template.name}</h1><p>${template.description}</p>`);
+        setContent(`
+          <h1>${template.name}</h1>
+          <p>${template.description}</p>
+          <img src="${template.image}" alt="${template.name}" style="max-width: 100%; height: auto; margin: 20px 0;" />
+          <p>Category: ${template.category}</p>
+        `);
       }
     }
-  }, [id]);
+  }, [id, location.state]);
 
   const handleSave = () => {
-    // Here you would typically save to a backend
+    const savedTemplates = JSON.parse(localStorage.getItem("savedTemplates") || "[]");
+    const newTemplate = {
+      id: Date.now(),
+      name: `Template ${savedTemplates.length + 1}`,
+      content: content,
+      date: new Date().toLocaleDateString()
+    };
+    
+    localStorage.setItem("savedTemplates", JSON.stringify([...savedTemplates, newTemplate]));
+    
     toast({
       title: "Template Saved",
       description: "Your template has been saved successfully.",

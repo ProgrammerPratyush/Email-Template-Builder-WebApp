@@ -1,32 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+
+interface SavedTemplate {
+  id: number;
+  name: string;
+  content: string;
+  date: string;
+}
 
 const Library = () => {
   const [htmlFile, setHtmlFile] = useState<File | null>(null);
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    // Load saved templates from localStorage
+    const templates = localStorage.getItem("savedTemplates");
+    if (templates) {
+      setSavedTemplates(JSON.parse(templates));
+    }
+  }, []);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === "text/html") {
       setHtmlFile(file);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (htmlFile) {
-      // Here you would typically upload to a backend
+      const content = await file.text();
+      const newTemplate = {
+        id: Date.now(),
+        name: file.name,
+        content: content,
+        date: new Date().toLocaleDateString()
+      };
+      
+      // Save to localStorage and update state
+      const updatedTemplates = [...savedTemplates, newTemplate];
+      localStorage.setItem("savedTemplates", JSON.stringify(updatedTemplates));
+      setSavedTemplates(updatedTemplates);
+      
+      // Navigate to editor with content
+      navigate(`/editor`, { state: { content } });
+      
       toast({
         title: "Template Uploaded",
         description: "Your template has been uploaded successfully.",
       });
-      navigate("/editor");
     }
+  };
+
+  const handleTemplateClick = (template: SavedTemplate) => {
+    navigate(`/editor`, { state: { content: template.content } });
   };
 
   return (
@@ -54,19 +83,28 @@ const Library = () => {
               onChange={handleFileUpload}
               className="flex-1"
             />
-            <Button onClick={handleUpload} disabled={!htmlFile}>
-              Upload
-            </Button>
           </div>
         </Card>
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Saved Templates</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Placeholder for saved templates */}
-            <Card className="p-6 text-center">
-              <p className="text-gray-500">No saved templates yet</p>
-            </Card>
+            {savedTemplates.length > 0 ? (
+              savedTemplates.map((template) => (
+                <Card
+                  key={template.id}
+                  className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => handleTemplateClick(template)}
+                >
+                  <h3 className="text-lg font-semibold">{template.name}</h3>
+                  <p className="text-sm text-gray-500">Created: {template.date}</p>
+                </Card>
+              ))
+            ) : (
+              <Card className="p-6 text-center">
+                <p className="text-gray-500">No saved templates yet</p>
+              </Card>
+            )}
           </div>
         </div>
       </div>
