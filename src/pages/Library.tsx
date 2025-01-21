@@ -1,15 +1,31 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { Plus } from "lucide-react";
 
 const Library = () => {
   const [htmlFile, setHtmlFile] = useState<File | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === "text/html") {
       setHtmlFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (htmlFile) {
+      // Here you would typically upload to a backend
+      toast({
+        title: "Template Uploaded",
+        description: "Your template has been uploaded successfully.",
+      });
+      navigate("/editor");
     }
   };
 
@@ -23,7 +39,13 @@ const Library = () => {
           </p>
         </div>
 
-        <Card className="mt-8 p-6">
+        <div className="mt-8 flex justify-end">
+          <Button onClick={() => navigate("/editor")} className="mb-4">
+            <Plus className="mr-2 h-4 w-4" /> Create New Template
+          </Button>
+        </div>
+
+        <Card className="mt-4 p-6">
           <h2 className="text-xl font-semibold mb-4">Upload Template</h2>
           <div className="flex gap-4">
             <Input
@@ -32,7 +54,9 @@ const Library = () => {
               onChange={handleFileUpload}
               className="flex-1"
             />
-            <Button disabled={!htmlFile}>Upload</Button>
+            <Button onClick={handleUpload} disabled={!htmlFile}>
+              Upload
+            </Button>
           </div>
         </Card>
 

@@ -7,6 +7,7 @@ import Navigation from "./components/Navigation";
 import Home from "./pages/Home";
 import Templates from "./pages/Templates";
 import Library from "./pages/Library";
+import Editor from "./pages/Editor";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,8 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/editor/:id" element={<Editor />} />
+          <Route path="/editor" element={<Editor />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
