@@ -1,69 +1,145 @@
-# Welcome to your Lovable project
+# Email Template Builder
 
-## Project info
+## Overview
 
-**URL**: https://lovable.dev/projects/82afa06a-2714-453e-9e10-d655d9508c06
+The Email Template Builder is a powerful web application that allows users to create, manage, and export email templates with ease. Built with modern web technologies, it provides a user-friendly interface for designing professional email templates and directly exporting them to email service providers.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+### 1. Template Management
+- **Pre-built Templates**: Access a variety of professional email templates across different categories:
+  - Business Invitations
+  - Newsletters
+  - Product Launches
+  - Welcome Emails
+  - Event Announcements
+  - Thank You Messages
+  - Feedback Requests
+  - Holiday Specials
+  - Company Updates
+  - Promotional Offers
 
-**Use Lovable**
+- **Template Library**: 
+  - Save custom templates
+  - Delete unwanted templates
+  - Preview templates before use
+  - Organize templates by category
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/82afa06a-2714-453e-9e10-d655d9508c06) and start prompting.
+### 2. Template Editor
+- **Rich Text Editor**: Powered by ReactQuill with features like:
+  - Text formatting (bold, italic, underline)
+  - Lists (ordered and unordered)
+  - Color customization
+  - Image insertion
+  - Link creation
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Email Compatibility Checker**:
+  - Real-time compatibility checking for Gmail and Outlook
+  - Visual indicators for potential compatibility issues
+  - Suggestions for improving compatibility
 
-**Use your preferred IDE**
+### 3. Export Capabilities
+- **Gmail Integration**:
+  - Direct export to Gmail drafts
+  - Secure OAuth2 authentication
+  - Maintains template formatting
+- **Download Options**:
+  - Export as HTML files
+  - Preserve all styling and formatting
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Technical Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Rich Text Editor**: React Quill
+- **Authentication**: Google OAuth 2.0
+- **State Management**: React Query
+- **Icons**: Lucide React
 
-Follow these steps:
+## Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. **Clone the Repository**
+```bash
+git clone <repository-url>
+cd email-template-builder
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. **Install Dependencies**
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. **Set Up Environment Variables**
+Create a `.env` file in the root directory:
+```env
+VITE_GMAIL_CLIENT_ID=your_client_id
+VITE_GMAIL_CLIENT_SECRET=your_client_secret
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. **Run the Development Server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Main application pages
+│   ├── Home.tsx        # Landing page
+│   ├── Templates.tsx   # Pre-built templates
+│   ├── Library.tsx     # Saved templates
+│   └── Editor.tsx      # Template editor
+├── utils/              # Utility functions
+│   └── gmailAuth.ts    # Gmail authentication
+└── hooks/              # Custom React hooks
+```
 
-**Use GitHub Codespaces**
+## Key Features Implementation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Gmail Integration
+The application uses Google OAuth 2.0 for secure Gmail integration:
+1. User clicks "Export to Gmail"
+2. OAuth consent screen appears
+3. User authorizes the application
+4. Template is saved to Gmail drafts
 
-## What technologies are used for this project?
+### Email Compatibility
+Templates are automatically checked for:
+- Inline styles
+- Complex selectors
+- Web fonts
+- Media queries
 
-This project is built with .
+### Template Management
+Templates are stored locally with:
+- Unique identifiers
+- Creation timestamps
+- Compatibility information
+- Content preservation
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-Simply open [Lovable](https://lovable.dev/projects/82afa06a-2714-453e-9e10-d655d9508c06) and click on Share -> Publish.
+## License
 
-## I want to use a custom domain - is that possible?
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Acknowledgments
+
+- [React Quill](https://github.com/zenoamaro/react-quill) for the rich text editor
+- [shadcn/ui](https://ui.shadcn.com/) for the UI components
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [Google Gmail API](https://developers.google.com/gmail/api) for email integration
+
+## Support
+
+For support, please open an issue in the repository or contact the development team.
