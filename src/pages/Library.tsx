@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Mail, CheckCircle, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Mail, CheckCircle, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,12 @@ interface SavedTemplate {
     gmail: boolean;
     outlook: boolean;
   };
+}
+
+interface EmailAccount {
+  type: 'gmail' | 'outlook';
+  email: string;
+  verified: boolean;
 }
 
 const Library = () => {
