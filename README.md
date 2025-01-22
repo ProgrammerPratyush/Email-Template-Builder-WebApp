@@ -1,4 +1,4 @@
-# Email Template Builder
+# Email Template Builder - By Pratyush Puri Goswwami
 
 ## Overview
 
@@ -136,10 +136,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - [React Quill](https://github.com/zenoamaro/react-quill) for the rich text editor
-- [shadcn/ui](https://ui.shadcn.com/) for the UI components
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [Google Gmail API](https://developers.google.com/gmail/api) for email integration
 
 ## Support
 
-For support, please open an issue in the repository or contact the development team.
+Your support is highly appreciated.
