@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Mail, CheckCircle, Trash2 } from "lucide-react";
+import { Plus, Mail, CheckCircle, Trash2, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { initGmailAuth, createDraft } from "@/utils/gmailAuth";
 
 interface SavedTemplate {
   id: number;
@@ -23,12 +24,6 @@ interface SavedTemplate {
     gmail: boolean;
     outlook: boolean;
   };
-}
-
-interface EmailAccount {
-  type: 'gmail' | 'outlook';
-  email: string;
-  verified: boolean;
 }
 
 const Library = () => {
@@ -112,11 +107,6 @@ const Library = () => {
   };
 
   const verifyEmailAccount = async () => {
-    // This is a mock verification - in a real implementation, you would:
-    // 1. Integrate with Gmail/Outlook OAuth
-    // 2. Verify the user's credentials
-    // 3. Get authorization to create drafts
-    
     if (emailInput && currentEmailAccount) {
       setCurrentEmailAccount({ ...currentEmailAccount, email: emailInput, verified: true });
       
@@ -125,7 +115,6 @@ const Library = () => {
         description: `Your ${currentEmailAccount.type} account has been verified.`,
       });
 
-      // Mock saving template as draft
       if (selectedTemplate) {
         toast({
           title: "Template Exported",
@@ -148,6 +137,24 @@ const Library = () => {
       gmail: !hasComplexSelectors && !hasWebFonts,
       outlook: !hasInlineStyles && !hasComplexSelectors && !hasWebFonts
     };
+  };
+
+  const handleGmailExport = async (template: SavedTemplate) => {
+    try {
+      const accessToken = await initGmailAuth();
+      await createDraft(accessToken as string, template.content);
+      
+      toast({
+        title: "Success",
+        description: "Template saved to Gmail drafts",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save template to Gmail drafts",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -185,7 +192,7 @@ const Library = () => {
               savedTemplates.map((template) => (
                 <Card
                   key={template.id}
-                  className="p-6 hover:shadow-lg transition-shadow"
+                  className="p-6 hover:shadow-lg transition-shadow relative"
                 >
                   <div onClick={() => handleTemplateClick(template)} className="cursor-pointer">
                     <h3 className="text-lg font-semibold">{template.name}</h3>
@@ -203,25 +210,20 @@ const Library = () => {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex gap-2 justify-end">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => initiateEmailExport(template, 'gmail')}
+                      onClick={() => handleGmailExport(template)}
+                      className="flex items-center gap-2"
                     >
-                      <Mail className="mr-2 h-4 w-4" /> Export to Gmail
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => initiateEmailExport(template, 'outlook')}
-                    >
-                      <Mail className="mr-2 h-4 w-4" /> Export to Outlook
+                      <Mail className="h-4 w-4" /> Export to Gmail
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteTemplate(template.id)}
+                      className="flex items-center justify-center w-10 h-10 p-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -242,7 +244,7 @@ const Library = () => {
           <DialogHeader>
             <DialogTitle>Verify Email Account</DialogTitle>
             <DialogDescription>
-              Please enter your {currentEmailAccount?.type} email address to verify your account
+              Please enter your email address to verify your account
               and save the template as a draft.
             </DialogDescription>
           </DialogHeader>
