@@ -1,4 +1,5 @@
-# Email Template Builder - By Pratyush Puri Goswwami
+# Email Template Builder & Editor📧
+### By Pratyush Puri Goswami
 
 ## Overview
 
